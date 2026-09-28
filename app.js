@@ -6,11 +6,11 @@ const HUES = {
 };
 const PRODUCTS = [
   {id:'senja-tee',name:'Senja Tee',category:'T-Shirt',hue:'Senja',color:'Warm Orange',price:129000,desc:'An easy everyday piece in a warm hue.',material:'100% combed cotton, 24s',sizes:['S','M','L','XL'],shopee:'https://shopee.co.id/hiyue',rec:['bumi-pants','bahari-outer','senja-skirt']},
-  {id:'bumi-pants',name:'Bumi Pants',category:'Pants',hue:'Bumi',color:'Clay Brown',price:189000,desc:'Relaxed straight-leg pants in a grounded earth tone.',material:'Cotton twill',sizes:['S','M','L','XL'],shopee:'https://shopee.co.id/hiyue',rec:['senja-tee','bahari-outer']},
+  {id:'bhoemi-pants',name:'Bumi Pants',category:'Pants',hue:'Bumi',color:'Clay Brown',price:189000,desc:'Relaxed straight-leg pants in a grounded earth tone.',material:'Cotton twill',sizes:['S','M','L','XL'],shopee:'https://shopee.co.id/hiyue',rec:['senja-tee','bahari-outer']},
   {id:'bahari-outer',name:'Bahari Outer',category:'Outerwear',hue:'Bahari',color:'Deep Teal',price:249000,desc:'Lightweight overshirt with a cool, breezy finish.',material:'Linen blend',sizes:['M','L','XL'],shopee:'https://shopee.co.id/hiyue',rec:['senja-tee','bumi-pants']},
   {id:'senja-skirt',name:'Senja Skirt',category:'Skirt',hue:'Senja',color:'Sunset Rust',price:159000,desc:'A-line midi skirt that carries the warmth of dusk.',material:'Rayon crepe',sizes:['S','M','L'],shopee:'https://shopee.co.id/hiyue',rec:['bahari-top','senja-tee']},
   {id:'bahari-top',name:'Bahari Top',category:'Top',hue:'Bahari',color:'Seafoam',price:139000,desc:'Soft cropped top with a fresh, cool character.',material:'Cotton jersey',sizes:['XS','S','M','L'],shopee:'https://shopee.co.id/hiyue',rec:['senja-skirt','bumi-pants']},
-  {id:'bumi-jacket',name:'Bumi Jacket',category:'Outerwear',hue:'Bumi',color:'Terracotta',price:279000,desc:'Structured jacket grounded in natural earth tones.',material:'Cotton canvas',sizes:['S','M','L','XL'],shopee:'https://shopee.co.id/hiyue',rec:['bahari-top','senja-tee']}
+  {id:'bhoemi-jacket',name:'Bumi Jacket',category:'Outerwear',hue:'Bumi',color:'Terracotta',price:279000,desc:'Structured jacket grounded in natural earth tones.',material:'Cotton canvas',sizes:['S','M','L','XL'],shopee:'https://shopee.co.id/hiyue',rec:['bahari-top','senja-tee']}
 ];
 const fmt = p => 'Rp' + p.toLocaleString('id-ID');
 const byId = id => PRODUCTS.find(p=>p.id===id);
