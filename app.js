@@ -11,7 +11,7 @@ const PRODUCTS = [
   {id:'senja-skirt',name:'Senja Skirt',category:'Skirt',hue:'Senja',color:'Sunset Rust',price:159000,desc:'A-line midi skirt that carries the warmth of dusk.',material:'Rayon crepe',sizes:['S','M','L'],shopee:'https://shopee.co.id/hiyue',rec:['bahari-top','senja-tee']},
   {id:'bahari-top',name:'Bahari Top',category:'Top',hue:'Bahari',color:'Seafoam',price:139000,desc:'Soft cropped top with a fresh, cool character.',material:'Cotton jersey',sizes:['XS','S','M','L'],shopee:'https://shopee.co.id/hiyue',rec:['senja-skirt','bumi-pants']},
   {id:'bumi-jacket',name:'Bhoemi Jacket',category:'Outerwear',hue:'Bumi',color:'Terracotta',price:279000,desc:'Structured jacket grounded in natural earth tones.',material:'Cotton canvas',sizes:['S','M','L','XL'],shopee:'https://shopee.co.id/hiyue',rec:['bahari-top','senja-tee']},
-  {id:'bahari-shirt',name:'Bahari Shirt',category:'Top',hue:'Bahari',color:'Aquamarine',price:279000,desc:'Kemeja bintang-bintang.',material:'American Drill',sizes:['S','M','L','XL'],shopee:'https://shopee.co.id/hiyue',rec:['bahari-top','senja-tee']}
+  {id:'bahari-shirt',img:'bahari shirt.jpg',name:'Bahari Shirt',category:'Top',hue:'Bahari',color:'Aquamarine',price:279000,desc:'Kemeja bintang-bintang.',material:'American Drill',sizes:['S','M','L','XL'],shopee:'https://shopee.co.id/hiyue',rec:['bahari-top','senja-tee']}
 ];
 const fmt = p => 'Rp' + p.toLocaleString('id-ID');
 const byId = id => PRODUCTS.find(p=>p.id===id);
@@ -20,7 +20,7 @@ const hueColor = h => HUES[h].colors[0];
 /* ---------- RENDER HELPERS ---------- */
 function productCard(p){
   return `<a href="#/product/${p.id}" class="pcard">
-    <div class="thumb" style="background:${hueColor(p.hue)}">${p.name}</div>
+    <div class="thumb" role="img" aria-label="${p.name}, ${p.color}" style="background:${hueColor(p.hue)}${p.img?`;background-image:url('/${p.img}');background-size:cover;background-position:center;color:transparent`:''}">${p.name}</div>
     <div class="pinfo">
       <div class="name">${p.name}</div>
       <div class="meta">${p.color} · ${p.hue}</div>
@@ -116,7 +116,7 @@ function renderProduct(id){
     <p class="muted" style="margin-bottom:20px"><a href="#/shop">Shop</a> / ${p.name}</p>
     <div class="pd-layout">
       <div>
-        <div class="pd-main" style="background:${hueColor(p.hue)}">${p.name}</div>
+        <div class="pd-main" role="img" aria-label="${p.name}, ${p.color}" style="background:${hueColor(p.hue)}${p.img?`;background-image:url('/${p.img}');background-size:cover;background-position:center;color:transparent`:''}">${p.name}</div>
         <div class="pd-thumbs">${h.colors.map(c=>`<div style="background:${c}"></div>`).join('')}</div>
       </div>
       <div>
