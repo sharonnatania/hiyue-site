@@ -119,3 +119,9 @@ select{padding:8px 12px;border-radius:10px;border:1px solid var(--line);backgrou
 .hue-tab.active{color:#fff}
 .swatches{display:flex;gap:10px;margin:16px 0}
 .swatch{width:44px;height:44px;border-radius:12px}
+.ai-promo{display:flex;align-items:center;gap:32px;background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:32px;flex-wrap:wrap}
+.ai-promo>div:first-child{flex:1;min-width:240px}
+.ai-promo-visual{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-weight:700;font-size:.85rem;color:var(--ink-soft);flex:1;min-width:240px;justify-content:center}
+.ai-input-row{display:flex;gap:14px;flex-wrap:wrap;margin-top:18px}
+.ai-spinner{width:44px;height:44px;border:3px solid var(--line);border-top-color:var(--senja);border-radius:50%;margin:0 auto;animation:ai-spin 1s linear infinite}
+@keyframes ai-spin{to{transform:rotate(360deg)}}
