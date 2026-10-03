@@ -17,6 +17,43 @@ const fmt = p => 'Rp' + p.toLocaleString('id-ID');
 const byId = id => PRODUCTS.find(p=>p.id===id);
 const hueColor = h => HUES[h].colors[0];
 
+/* ---------- AI PERSONAL COLOR ANALYSIS (demo heuristic, not a real AI model) ---------- */
+const PALETTE_NAMES = {
+  Bumi: ['Clay Brown','Soft Beige','Deep Umber'],
+  Bahari: ['Deep Teal','Seafoam','Midnight Teal'],
+  Senja: ['Warm Orange','Golden Amber','Terracotta']
+};
+const HUE_EXPLANATION = {
+  Bumi: 'Your tones lean earthy and grounded — warm browns and natural neutrals tend to bring out a calm, steady look.',
+  Bahari: 'Your tones lean cool and fresh — teals and sea-inspired blues tend to create a relaxed, easygoing look.',
+  Senja: 'Your tones lean warm and golden — sunset oranges and terracotta tend to create a confident, expressive look.'
+};
+function hexToRgb(hex){ const n = parseInt(hex.slice(1),16); return { r:(n>>16)&255, g:(n>>8)&255, b:n&255 }; }
+function getAverageColor(imgEl){
+  const canvas = document.createElement('canvas');
+  const w = canvas.width = 50, h = canvas.height = 50;
+  const ctx = canvas.getContext('2d');
+  ctx.drawImage(imgEl,0,0,w,h);
+  const data = ctx.getImageData(0,0,w,h).data;
+  let r=0,g=0,b=0,n=0;
+  for(let i=0;i<data.length;i+=4){ r+=data[i]; g+=data[i+1]; b+=data[i+2]; n++; }
+  return { r:r/n, g:g/n, b:b/n };
+}
+function analyzePersonalColor(imgEl){
+  // Simplified demo heuristic for illustration purposes — this is NOT a scientific
+  // personal color analysis and does not use a real AI model.
+  const avg = getAverageColor(imgEl);
+  const ranked = Object.keys(HUES).map(key=>{
+    const rgb = hexToRgb(HUES[key].colors[0]);
+    const dist = Math.sqrt((avg.r-rgb.r)**2 + (avg.g-rgb.g)**2 + (avg.b-rgb.b)**2);
+    return { key, dist };
+  }).sort((a,b)=>a.dist-b.dist);
+  const hue = ranked[0].key;
+  const temperature = hue==='Senja' ? 'Warm' : hue==='Bahari' ? 'Cool' : 'Neutral';
+  const palette = HUES[hue].colors.map((hex,i)=>({ name: PALETTE_NAMES[hue][i], hex }));
+  return { hue, temperature, palette };
+}
+
 /* ---------- RENDER HELPERS ---------- */
 function productCard(p){
   return `<a href="#/product/${p.id}" class="pcard">
@@ -62,6 +99,23 @@ function renderHome(){
   <section><div class="wrap">
     <div class="section-head"><h2 class="h2">Featured Collection</h2></div>
     <div class="pgrid">${PRODUCTS.slice(0,4).map(productCard).join('')}</div>
+  </div></section>
+
+  <section><div class="wrap" style="max-width:860px">
+    <div class="ai-promo">
+      <div>
+        <span class="tag">Find Your Hue</span>
+        <h2 class="h2">What's Your Hue?</h2>
+        <p class="muted" style="margin-top:10px">Curious which colors feel most like you? Let AI help you discover your personal color palette.</p>
+        <div class="cta-row" style="margin-top:20px">
+          <a href="#/find-my-hue" class="btn btn-primary">Find My Hue</a>
+        </div>
+        <p class="muted" style="margin-top:10px;font-size:.85rem">A quick color guide, made personal.</p>
+      </div>
+      <div class="ai-promo-visual">
+        <span>Photo</span><span>→</span><span>AI Analysis</span><span>→</span><span>Your Hue</span><span>→</span><span>HIYUE Picks</span>
+      </div>
+    </div>
   </div></section>
 
   <section><div class="wrap">
@@ -180,6 +234,131 @@ function renderAbout(){
   </div></section>`;
 }
 
+/* ---------- AI PAGE: FIND MY HUE ---------- */
+let aiState = { step:'intro', imageEl:null, result:null };
+
+function renderAIIntro(){
+  return `<section><div class="wrap" style="max-width:600px">
+    <div class="section-head"><h2 class="h2">Find Your Hue</h2>
+    <p class="muted" style="margin-top:10px">Not sure which colors suit you? Upload a photo and let AI help you discover a color palette that complements your natural coloring.</p></div>
+    <button id="startAnalysisBtn" class="btn btn-primary">Start Analysis</button>
+    <p class="muted" style="margin-top:28px;font-size:.85rem">This AI analysis is intended as a styling guide. Results may vary depending on lighting, camera quality, and image conditions. Your photo is used only for this analysis — please avoid uploading photos containing other people.</p>
+  </div></section>`;
+}
+
+function renderAIInput(){
+  return `<section><div class="wrap" style="max-width:600px">
+    <div class="section-head"><h2 class="h2">Add Your Photo</h2>
+    <p class="muted" style="margin-top:8px">For a better result: use a clear, front-facing photo in natural or neutral lighting. Avoid strong colored lighting, heavy filters, and keep your face unobstructed.</p></div>
+    <div class="ai-input-row">
+      <button id="useCameraBtn" class="btn btn-outline">Use Camera</button>
+      <button id="uploadPhotoBtn" class="btn btn-outline">Upload Photo</button>
+    </div>
+    <input type="file" id="cameraInput" accept="image/*" capture="user" style="display:none">
+    <input type="file" id="uploadInput" accept="image/jpeg,image/png,image/webp" style="display:none">
+    <p class="muted" style="margin-top:20px;font-size:.85rem">Your photo stays in your browser for this analysis and is not uploaded anywhere.</p>
+  </div></section>`;
+}
+
+function renderAILoading(){
+  return `<section><div class="wrap" style="max-width:500px;text-align:center">
+    <div class="ai-spinner"></div>
+    <p id="loadMsg" style="margin-top:20px;font-weight:700">Reading your colors...</p>
+  </div></section>`;
+}
+
+function renderAIResult(){
+  const r = aiState.result;
+  const h = HUES[r.hue];
+  const recs = PRODUCTS.filter(p=>p.hue===r.hue).slice(0,4);
+  return `<section><div class="wrap">
+    <div style="text-align:center;max-width:560px;margin:0 auto">
+      <p class="muted" style="text-transform:uppercase;letter-spacing:.05em;font-size:.8rem;font-weight:700">Your Hue</p>
+      <h2 class="h1" style="margin-top:6px">${r.hue.toUpperCase()}</h2>
+      <p class="muted" style="margin-top:6px">${h.character} · ${h.mood}</p>
+      <div class="swatches" style="justify-content:center;margin-top:18px">${r.palette.map(c=>`<div style="text-align:center"><div class="swatch" style="background:${c.hex}"></div><p class="muted" style="font-size:.75rem;margin-top:4px">${c.name}</p></div>`).join('')}</div>
+      <div class="hue-box" style="text-align:left;margin-top:24px">
+        <b>Why This Hue?</b>
+        <p class="muted" style="margin-top:8px;font-size:.92rem">${HUE_EXPLANATION[r.hue]}</p>
+      </div>
+      <p class="muted" style="margin-top:14px;font-size:.8rem">This AI analysis is intended as a styling guide. Results may vary depending on lighting, camera quality, and image conditions.</p>
+    </div>
+
+    <div style="margin-top:48px">
+      <div class="section-head" style="text-align:center;margin:0 auto 24px;max-width:480px"><h2 class="h2">Made for Your Hue</h2><p class="muted">Explore HIYUE pieces that match your color profile.</p></div>
+      <div class="pgrid">${recs.map(productCard).join('') || '<p class="muted" style="text-align:center">More pieces coming soon in this hue.</p>'}</div>
+    </div>
+
+    <div style="text-align:center;margin-top:36px;display:flex;gap:14px;justify-content:center;flex-wrap:wrap">
+      <button id="shopMyHueBtn" class="btn btn-primary">Shop My Hue</button>
+      <button id="tryAgainBtn" class="btn btn-outline">Try Again</button>
+      <a href="#/shop" class="btn btn-outline">Explore All Products</a>
+    </div>
+  </div></section>`;
+}
+
+function renderFindMyHue(){
+  if(aiState.step==='input') return renderAIInput();
+  if(aiState.step==='loading') return renderAILoading();
+  if(aiState.step==='result') return renderAIResult();
+  return renderAIIntro();
+}
+
+function handlePhoto(file){
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = e=>{
+    const img = new Image();
+    img.onload = ()=>{
+      aiState.imageEl = img;
+      aiState.step = 'loading';
+      app.innerHTML = renderFindMyHue();
+      runAnalysisSequence();
+    };
+    img.src = e.target.result;
+  };
+  reader.readAsDataURL(file);
+}
+
+function runAnalysisSequence(){
+  const msgs = ['Reading your colors...','Finding your hue...','Matching your palette with HIYUE...'];
+  let i = 0;
+  const tick = ()=>{
+    const el = document.getElementById('loadMsg');
+    if(el) el.textContent = msgs[i];
+    i++;
+    if(i < msgs.length) setTimeout(tick, 900);
+    else setTimeout(()=>{
+      aiState.result = analyzePersonalColor(aiState.imageEl);
+      aiState.step = 'result';
+      app.innerHTML = renderFindMyHue();
+      bindFindMyHue();
+      observeReveals();
+    }, 900);
+  };
+  tick();
+}
+
+function bindFindMyHue(){
+  const startBtn = document.getElementById('startAnalysisBtn');
+  if(startBtn) startBtn.onclick = ()=>{ aiState.step='input'; app.innerHTML=renderFindMyHue(); bindFindMyHue(); };
+
+  const camBtn = document.getElementById('useCameraBtn');
+  const upBtn = document.getElementById('uploadPhotoBtn');
+  const cam = document.getElementById('cameraInput');
+  const up = document.getElementById('uploadInput');
+  if(camBtn) camBtn.onclick = ()=>cam.click();
+  if(upBtn) upBtn.onclick = ()=>up.click();
+  if(cam) cam.onchange = e=>handlePhoto(e.target.files[0]);
+  if(up) up.onchange = e=>handlePhoto(e.target.files[0]);
+
+  const shopBtn = document.getElementById('shopMyHueBtn');
+  if(shopBtn) shopBtn.onclick = ()=>{ shopState.color = aiState.result.hue; shopState.cat='All'; location.hash='/shop'; };
+
+  const tryBtn = document.getElementById('tryAgainBtn');
+  if(tryBtn) tryBtn.onclick = ()=>{ aiState = {step:'intro',imageEl:null,result:null}; app.innerHTML=renderFindMyHue(); bindFindMyHue(); observeReveals(); };
+}
+
 /* ---------- ROUTER ---------- */
 const app = document.getElementById('app');
 function route(){
@@ -189,6 +368,7 @@ function route(){
   if(hash==='/' ) app.innerHTML = renderHome();
   else if(hash==='/shop') { app.innerHTML = renderShop(); bindShop(); }
   else if(hash.startsWith('/product/')) app.innerHTML = renderProduct(hash.split('/')[2]);
+  else if(hash.startsWith('/find-my-hue')) { aiState = {step:'intro',imageEl:null,result:null}; app.innerHTML = renderFindMyHue(); bindFindMyHue(); }
   else if(hash.startsWith('/hue')) { app.innerHTML = renderHue(hash.split('/')[2]); bindHue(); }
   else if(hash==='/about') app.innerHTML = renderAbout();
   else app.innerHTML = `<section class="wrap"><p>Page not found. <a href="#/">Go home</a></p></section>`;
