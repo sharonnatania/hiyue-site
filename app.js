@@ -29,20 +29,20 @@ const HUE_EXPLANATION = {
   Senja: 'Your tones lean warm and golden — sunset oranges and terracotta tend to create a confident, expressive look.'
 };
 function hexToRgb(hex){ const n = parseInt(hex.slice(1),16); return { r:(n>>16)&255, g:(n>>8)&255, b:n&255 }; }
-function getAverageColor(imgEl){
+function getAverageColor(src){
   const canvas = document.createElement('canvas');
   const w = canvas.width = 50, h = canvas.height = 50;
   const ctx = canvas.getContext('2d');
-  ctx.drawImage(imgEl,0,0,w,h);
+  ctx.drawImage(src,0,0,w,h);
   const data = ctx.getImageData(0,0,w,h).data;
   let r=0,g=0,b=0,n=0;
   for(let i=0;i<data.length;i+=4){ r+=data[i]; g+=data[i+1]; b+=data[i+2]; n++; }
   return { r:r/n, g:g/n, b:b/n };
 }
-function analyzePersonalColor(imgEl){
+function analyzePersonalColor(src){
   // Simplified demo heuristic for illustration purposes — this is NOT a scientific
   // personal color analysis and does not use a real AI model.
-  const avg = getAverageColor(imgEl);
+  const avg = getAverageColor(src);
   const ranked = Object.keys(HUES).map(key=>{
     const rgb = hexToRgb(HUES[key].colors[0]);
     const dist = Math.sqrt((avg.r-rgb.r)**2 + (avg.g-rgb.g)**2 + (avg.b-rgb.b)**2);
@@ -235,7 +235,7 @@ function renderAbout(){
 }
 
 /* ---------- AI PAGE: FIND MY HUE ---------- */
-let aiState = { step:'intro', imageEl:null, result:null };
+let aiState = { step:'intro', imageEl:null, result:null, stream:null };
 
 function renderAIIntro(){
   return `<section><div class="wrap" style="max-width:600px">
@@ -254,9 +254,20 @@ function renderAIInput(){
       <button id="useCameraBtn" class="btn btn-outline">Use Camera</button>
       <button id="uploadPhotoBtn" class="btn btn-outline">Upload Photo</button>
     </div>
-    <input type="file" id="cameraInput" accept="image/*" capture="user" style="display:none">
     <input type="file" id="uploadInput" accept="image/jpeg,image/png,image/webp" style="display:none">
     <p class="muted" style="margin-top:20px;font-size:.85rem">Your photo stays in your browser for this analysis and is not uploaded anywhere.</p>
+  </div></section>`;
+}
+
+function renderAICamera(){
+  return `<section><div class="wrap" style="max-width:500px;text-align:center">
+    <div class="section-head"><h2 class="h2">Take a Photo</h2><p class="muted" style="margin-top:8px">Center your face in natural lighting, then capture.</p></div>
+    <div class="ai-camera-frame"><video id="aiVideo" autoplay playsinline muted></video></div>
+    <div class="ai-input-row" style="justify-content:center;margin-top:18px">
+      <button id="captureBtn" class="btn btn-primary">Capture</button>
+      <button id="cancelCameraBtn" class="btn btn-outline">Cancel</button>
+    </div>
+    <p id="cameraError" class="muted" style="margin-top:14px;font-size:.85rem"></p>
   </div></section>`;
 }
 
@@ -299,9 +310,26 @@ function renderAIResult(){
 
 function renderFindMyHue(){
   if(aiState.step==='input') return renderAIInput();
+  if(aiState.step==='camera') return renderAICamera();
   if(aiState.step==='loading') return renderAILoading();
   if(aiState.step==='result') return renderAIResult();
   return renderAIIntro();
+}
+
+function stopCamera(){
+  if(aiState.stream){ aiState.stream.getTracks().forEach(t=>t.stop()); aiState.stream = null; }
+}
+
+async function startCamera(){
+  const errEl = document.getElementById('cameraError');
+  try{
+    const stream = await navigator.mediaDevices.getUserMedia({ video:{ facingMode:'user' }, audio:false });
+    aiState.stream = stream;
+    const video = document.getElementById('aiVideo');
+    if(video) video.srcObject = stream;
+  }catch(err){
+    if(errEl) errEl.textContent = 'Could not access the camera. Please allow camera access in your browser, or use Upload Photo instead.';
+  }
 }
 
 function handlePhoto(file){
@@ -345,30 +373,45 @@ function bindFindMyHue(){
 
   const camBtn = document.getElementById('useCameraBtn');
   const upBtn = document.getElementById('uploadPhotoBtn');
-  const cam = document.getElementById('cameraInput');
   const up = document.getElementById('uploadInput');
-  if(camBtn) camBtn.onclick = ()=>cam.click();
+  if(camBtn) camBtn.onclick = ()=>{ aiState.step='camera'; app.innerHTML=renderFindMyHue(); bindFindMyHue(); startCamera(); };
   if(upBtn) upBtn.onclick = ()=>up.click();
-  if(cam) cam.onchange = e=>handlePhoto(e.target.files[0]);
   if(up) up.onchange = e=>handlePhoto(e.target.files[0]);
+
+  const captureBtn = document.getElementById('captureBtn');
+  if(captureBtn) captureBtn.onclick = ()=>{
+    const video = document.getElementById('aiVideo');
+    const canvas = document.createElement('canvas');
+    canvas.width = video.videoWidth || 320;
+    canvas.height = video.videoHeight || 320;
+    canvas.getContext('2d').drawImage(video,0,0,canvas.width,canvas.height);
+    stopCamera();
+    aiState.imageEl = canvas;
+    aiState.step = 'loading';
+    app.innerHTML = renderFindMyHue();
+    runAnalysisSequence();
+  };
+  const cancelBtn = document.getElementById('cancelCameraBtn');
+  if(cancelBtn) cancelBtn.onclick = ()=>{ stopCamera(); aiState.step='input'; app.innerHTML=renderFindMyHue(); bindFindMyHue(); };
 
   const shopBtn = document.getElementById('shopMyHueBtn');
   if(shopBtn) shopBtn.onclick = ()=>{ shopState.color = aiState.result.hue; shopState.cat='All'; location.hash='/shop'; };
 
   const tryBtn = document.getElementById('tryAgainBtn');
-  if(tryBtn) tryBtn.onclick = ()=>{ aiState = {step:'intro',imageEl:null,result:null}; app.innerHTML=renderFindMyHue(); bindFindMyHue(); observeReveals(); };
+  if(tryBtn) tryBtn.onclick = ()=>{ aiState = {step:'intro',imageEl:null,result:null,stream:null}; app.innerHTML=renderFindMyHue(); bindFindMyHue(); observeReveals(); };
 }
 
 /* ---------- ROUTER ---------- */
 const app = document.getElementById('app');
 function route(){
+  stopCamera();
   const hash = location.hash.replace('#','') || '/';
   document.querySelectorAll('.navlinks a').forEach(a=>a.classList.toggle('active', a.getAttribute('data-r')===hash || (a.getAttribute('data-r')==='/shop'&&hash.startsWith('/product'))));
   document.getElementById('navlinks').classList.remove('open');
   if(hash==='/' ) app.innerHTML = renderHome();
   else if(hash==='/shop') { app.innerHTML = renderShop(); bindShop(); }
   else if(hash.startsWith('/product/')) app.innerHTML = renderProduct(hash.split('/')[2]);
-  else if(hash.startsWith('/find-my-hue')) { aiState = {step:'intro',imageEl:null,result:null}; app.innerHTML = renderFindMyHue(); bindFindMyHue(); }
+  else if(hash.startsWith('/find-my-hue')) { aiState = {step:'intro',imageEl:null,result:null,stream:null}; app.innerHTML = renderFindMyHue(); bindFindMyHue(); }
   else if(hash.startsWith('/hue')) { app.innerHTML = renderHue(hash.split('/')[2]); bindHue(); }
   else if(hash==='/about') app.innerHTML = renderAbout();
   else app.innerHTML = `<section class="wrap"><p>Page not found. <a href="#/">Go home</a></p></section>`;
