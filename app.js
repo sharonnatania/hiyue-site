@@ -11,7 +11,7 @@ const PRODUCTS = [
   {id:'senja-skirt',name:'Senja Skirt',category:'Skirt',hue:'Senja',color:'Sunset Rust',price:159000,desc:'A-line midi skirt that carries the warmth of dusk.',material:'Rayon crepe',sizes:['S','M','L'],shopee:'https://shopee.co.id/hiyue',rec:['bahari-top','senja-tee']},
   {id:'bahari-top',name:'Bahari Top',category:'Top',hue:'Bahari',color:'Seafoam',price:139000,desc:'Soft cropped top with a fresh, cool character.',material:'Cotton jersey',sizes:['XS','S','M','L'],shopee:'https://shopee.co.id/hiyue',rec:['senja-skirt','bumi-pants']},
   {id:'bumi-jacket',name:'Bhoemi Jacket',category:'Outerwear',hue:'Bumi',color:'Terracotta',price:279000,desc:'Structured jacket grounded in natural earth tones.',material:'Cotton canvas',sizes:['S','M','L','XL'],shopee:'https://shopee.co.id/hiyue',rec:['bahari-top','senja-tee']},
-  {id:'bahari-shirt',img:'Gif Sandy Bahari,jpeg',name:'Sandy-Bahari Shirt',category:'Top',hue:'Bahari',color:'Aquamarine',price:1899000,desc:'Sandy with aquamarine list',material:'American Drill',sizes:['S','M','L','XL'],shopee:'https://shopee.co.id/hiyue',rec:['bahari-top','senja-tee']}
+  {id:'bahari-shirt',img:'Gif Sandy Bahari.jpeg',name:'Sandy-Bahari Shirt',category:'Top',hue:'Bahari',color:'Aquamarine',price:189000,desc:'Sandy with aquamarine list',material:'American Drill',sizes:['S','M','L','XL'],shopee:'https://shopee.co.id/hiyue',rec:['bahari-top','senja-tee']}
 ];
 const fmt = p => 'Rp' + p.toLocaleString('id-ID');
 const byId = id => PRODUCTS.find(p=>p.id===id);
