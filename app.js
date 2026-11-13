@@ -75,7 +75,7 @@ function renderHome(){
       <p class="muted" style="margin-top:18px;max-width:440px;font-size:1.05rem">HIYUE helps you discover colors and create outfits you feel genuinely confident wearing — no guesswork, just your hue.</p>
       <div class="cta-row">
         <a href="#/shop" class="btn btn-primary">Explore Collection</a>
-        <a href="#/hue" class="btn btn-outline">Find Your Hue</a>
+        <a href="#/find-my-hue" class="btn btn-outline">Find My Hue</a>
       </div>
     </div>
     <div class="hero-visual"></div>
